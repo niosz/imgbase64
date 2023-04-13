@@ -1,0 +1,26 @@
+{
+  "name": "niosz-imgbase64",
+  "version": "1.0.0",
+  "description": "convert image or url to base64 format",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "imgb64": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/niosz/imgbase64.git"
+  },
+  "author": "Fabio Gatto (fabio.gatto@live.it)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/niosz/imgbase64/issues"
+  },
+  "homepage": "https://github.com/niosz/imgbase64#readme",
+  "dependencies": {
+    "is-url": "^1.2.4",
+    "sync-request": "^6.1.0"
+  }
+}
