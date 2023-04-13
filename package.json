@@ -1,6 +1,6 @@
 {
   "name": "niosz-imgbase64",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "convert image or url to base64 format",
   "main": "index.js",
   "scripts": {

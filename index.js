@@ -26,7 +26,7 @@ if (args.length == 0) {
     software          : ${pkg.name} (v${pkg.version})
     information       : ${pkg.description}
     author            : ${pkg.author}
-    usage             : ${pkg.name} <url|file>
+    usage             : ${pkg.name} <url|file|-json:file>
     supported formats : ${supportFormats()}
     supported mimes   : ${supportMimes()}
 `
@@ -50,6 +50,7 @@ const prefixFromContentType = function(contentType) {
 };
 const prefixFromPath = function(path) {
     if (typeof path != "string") return null;
+    if (!fs.existsSync(path)) return null;
     var extension = PATH.extname(path).toLowerCase();
     for (var i=0;i<support.length;i++) {
         if (support[i].extensions.indexOf(extension)>=0) {
@@ -59,22 +60,42 @@ const prefixFromPath = function(path) {
     return null;
 };
 //✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤
+const primitiveDecode = function(arg) {
+    if (isUrl(arg)) {
+        var data = request("GET",arg);
+        var dtyp = data.headers["content-type"];
+        var pref = prefixFromContentType(dtyp);
+        if (pref == null) throw new Error("mime format not admitted : " + dtyp);
+        var base = data.getBody("base64");
+        return pref+base;
+    } else {
+        var pref = prefixFromPath(arg);
+        if (pref == null) throw new Error("file format not admitted : " + arg);
+        var data = fs.readFileSync(arg,"binary"); 
+        var base = Buffer.from(data,"binary").toString("base64");
+        return pref+base;
+    }
+};
+//✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤✤
 while (args.length > 0) {
     var arg = args.shift();
     try {
-        if (isUrl(arg)) {
-            var data = request("GET",arg);
-            var dtyp = data.headers["content-type"];
-            var pref = prefixFromContentType(dtyp);
-            if (pref == null) throw new Error("mime format not admitted : " + dtyp);
-            var base = data.getBody("base64");
-            console.log(pref+base);
+        if (arg.startsWith("-json:")) {
+            var jsonParser = function(key,value) {
+                if (typeof value === "string") {
+                    var backup = value;
+                    try {
+                        value = primitiveDecode(value);
+                    } catch {
+                        value = backup;
+                    }
+                }
+                return value;
+            };
+            var json = JSON.parse(fs.readFileSync(arg.substring(6),"utf8"),jsonParser);
+            fs.writeFileSync(arg.substring(6),JSON.stringify(json,null,2),"utf8");
         } else {
-            var pref = prefixFromPath(arg);
-            if (pref == null) throw new Error("file format not admitted : " + arg);
-            var data = fs.readFileSync(arg,"binary"); 
-            var base = Buffer.from(data,"binary").toString("base64");
-            console.log(pref+base);
+            console.log(primitiveDecode(arg));
         }
     } catch(e) {
         console.error(arg,e);
